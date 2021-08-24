@@ -8,13 +8,11 @@
 #define F_CPU 8000000UL
 #include "lib/types.h"
 #include "lib/BIT_math.h"
-#include <avr/delay.h>
 #include "DIO_interface.h"
 #include "LCD_interface.h"
 #include "UART_interface.h"
 
-
-void main(void)		// Master
+void main(void)		// Slave
 {
 	//initialization
 	/* DIO initialization */
@@ -31,14 +29,13 @@ void main(void)		// Master
 	UART_vidInit();
 
 	/* default strings */
-	u8 scr1_line1[]="Choose Question:";
-	u8 scr1_line2[]="1.Busy  2.Hungry";
-	u8 scr2_line1[]="Asked if ";
-	u8 scr2_line1_case1[]="Busy";
-	u8 scr2_line1_case2[]="Hungry";
-	u8 scr2_line2[]="Waiting Answer";
-	u8 scr3_case1[]="Yes, I am";
-	u8 scr3_case2[]="No, I am not";
+	u8 scr1_line1[]="Waiting for ";
+	u8 scr1_line2[]="Question";
+	u8 scr2_line1[]="Are you ";
+	u8 scr2_line1_case1[]="Busy?";
+	u8 scr2_line1_case2[]="Hungry?";
+	u8 scr2_line2[]="1.Yes   2.No";
+
 
 	/* Variables initialization */
 	u8 Btn = 0;
@@ -54,6 +51,26 @@ void main(void)		// Master
 		LCD_vidSendCommand(LCD_LINE2);
 		LCD_vidwriteStr(scr1_line2);
 
+		//UART 1
+		answer = UART_Receive();
+
+		//screen 2
+		LCD_vidSendCommand(LCD_CLR);
+		LCD_vidSendCommand(LCD_LINE1);
+		LCD_vidwriteStr(scr2_line1);
+
+		if(answer == 1)
+		{
+			LCD_vidwriteStr(scr2_line1_case1);
+		}
+		else if(answer == 2)
+		{
+			LCD_vidwriteStr(scr2_line1_case2);
+		}
+
+		LCD_vidSendCommand(LCD_LINE2);
+		LCD_vidwriteStr(scr2_line2);
+
 		Btn = 0;
 		while(!(Btn))
 		{
@@ -67,44 +84,11 @@ void main(void)		// Master
 			}
 		}
 
-		//screen 2
-		LCD_vidSendCommand(LCD_CLR);
-		LCD_vidSendCommand(LCD_LINE1);
-		LCD_vidwriteStr(scr2_line1);
-
-		if(Btn == 1)
-		{
-			LCD_vidwriteStr(scr2_line1_case1);
-		}
-		else if(Btn == 2)
-		{
-			LCD_vidwriteStr(scr2_line1_case2);
-		}
-
-		LCD_vidSendCommand(LCD_LINE2);
-		LCD_vidwriteStr(scr2_line2);
-
-
-		//UART
+		//UART 2
 		UART_Transmit(Btn);
 
-		answer = UART_Receive();
-
-		//screen 3
-		LCD_vidSendCommand(LCD_CLR);
-		if(answer == 1)
-		{
-			LCD_vidSendCommand(LCD_LINE1);
-			LCD_vidwriteStr(scr3_case1);
-		}
-		else if(answer == 2)
-		{
-			LCD_vidSendCommand(LCD_LINE1);
-			LCD_vidwriteStr(scr3_case2);
-		}
-
-
-		_delay_ms(3000);
 	}
 
 }
+
+
